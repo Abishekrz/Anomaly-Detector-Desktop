@@ -3,6 +3,8 @@
 import os
 import datetime
 from pathlib import Path
+
+from streamlit import json
 from inference.detector import load_models
 from inference.commenter import generate_comments
 from utils.viz import draw_boxes
@@ -36,10 +38,39 @@ def create_session_folder():
 # -------------------------------------------------------------
 # Save Excel results inside the session folder
 # -------------------------------------------------------------
-def save_to_excel(session_results_dir: Path, filename: str, detections: list, comments: list):
-    excel_path = session_results_dir / "results.xlsx"
+def save_to_excel(session_results_dir: Path, actual_image_path: str, annotated_image_path: str,
+                  detections: list, comments: list):
+    """
+    Save one row per inference to results.xlsx inside session_results_dir.
 
-    # If exists → append; else → create new
+    Columns:
+    - Timestamp
+    - Actual Image Path
+    - Actual Image Name
+    - Annotated Image Path
+    - Annotated Image Name
+    - Findings (JSON string of detections)
+    - Comments (semi-colon separated)
+    """
+    excel_path = session_results_dir / "results.xlsx"
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Prepare data
+    actual_image_path = str(actual_image_path)
+    annotated_image_path = str(annotated_image_path)
+    actual_image_name = Path(actual_image_path).name
+    annotated_image_name = Path(annotated_image_path).name
+
+    # Serialize detections to JSON (compact)
+    try:
+        findings_json = json.dumps(detections, ensure_ascii=False)
+    except Exception:
+        # Fallback: simple string representation
+        findings_json = str(detections)
+
+    comments_text = "; ".join(comments) if comments else ""
+
+    # Create or append workbook
     if excel_path.exists():
         wb = load_workbook(excel_path)
         ws = wb.active
@@ -47,13 +78,18 @@ def save_to_excel(session_results_dir: Path, filename: str, detections: list, co
         wb = Workbook()
         ws = wb.active
         ws.title = "Results"
-        ws.append(["Filename", "Detections", "Comments"])
+        ws.append([
+            "Timestamp",
+            "Actual Image Path",
+            "Actual Image Name",
+            "Annotated Image Path",
+            "Annotated Image Name",
+            "Findings (JSON)",
+            "Comments"
+        ])
 
-    # Convert detection and comments to text
-    labels = ", ".join([d.get("label", "") for d in detections]) if detections else "None"
-    comment_text = "; ".join(comments) if comments else "No comments"
-
-    ws.append([filename, labels, comment_text])
+    ws.append([now, actual_image_path, actual_image_name, annotated_image_path,
+               annotated_image_name, findings_json, comments_text])
     wb.save(excel_path)
 
     print("EXCEL SAVED:", excel_path)
@@ -140,7 +176,12 @@ def run_inference_on_path(image_path: str, session_results_dir: Path, enabled_mo
         print("DRAW ERROR:", e)
 
     # ------------ Save Excel ------------ #
-    save_to_excel(session_results_dir, Path(image_path).name, all_detections, comments)
+        # ------------ Save Excel (NEW call signature) ------------ #
+    try:
+        save_to_excel(session_results_dir, image_path, out_path_str, all_detections, comments)
+    except Exception as e:
+        print("EXCEL SAVE ERROR:", e)
+
 
     return out_path_str, all_detections, comments
 

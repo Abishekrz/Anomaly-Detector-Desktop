@@ -47,7 +47,7 @@ electrical component: "Electrical component detected — verify safe installatio
 
 electrical light: "Electrical light detected — check functionality and electrical safety."
 
-electrical panel: "Electrical panel detected — ensure no obstruction and proper fencing."
+electrical panel close: "Electrical panel detected — ensure no obstruction and proper fencing."
 
 electrical panel open: "Open electrical panel detected — close immediately & ensure panel fencing."
 

@@ -1,38 +1,46 @@
-name: Build Windows EXE
+name: Build Windows EXE (PyInstaller)
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"   # Runs when you push a version tag like v1.0.0
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
+      # 1. Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Install Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.10"
 
+      # 3. Install dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build EXE
+      # 4. Build EXE (ONEDIR mode)
+      - name: Build EXE with PyInstaller (ONEDIR)
         run: |
-          pyinstaller AnomalyDetector.spec
+          pyinstaller main.py --onedir --noconsole --name AnomalyDetector --add-data "models;models" --add-data "static;static" --add-data "utils;utils"
 
-      - name: Upload EXE artifact
-        uses: actions/upload-artifact@v4
+      # 5. Zip the build folder
+      - name: Zip build folder
+        run: |
+          powershell Compress-Archive -Path dist/AnomalyDetector -DestinationPath dist/AnomalyDetector.zip
+
+      # 6. Upload release
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
         with:
-          name: AnomalyDetector
-          path: dist/AnomalyDetector
+          files: dist/AnomalyDetector.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

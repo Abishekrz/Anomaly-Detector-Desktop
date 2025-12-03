@@ -1,0 +1,99 @@
+# ------------------------------------------
+# Python general
+# ------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Virtual environments
+venv/
+env/
+.buildenv/
+buildenv/
+
+# Byte-compiled / cached files
+*.cache
+*.egg-info/
+*.egg
+.eggs/
+
+# ------------------------------------------
+# IDE / Editor
+# ------------------------------------------
+.vscode/
+.idea/
+*.swp
+
+# ------------------------------------------
+# OS files
+# ------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------------------------
+# Logs
+# ------------------------------------------
+*.log
+
+# ------------------------------------------
+# Application cache
+# ------------------------------------------
+sessions/
+uploads/
+static/results/
+static/cache/
+
+# ------------------------------------------
+# YOLO + ONNX files
+# (keep only the .pt and .onnx you track)
+# ------------------------------------------
+*.jpg
+*.jpeg
+*.png
+*.bmp
+
+# Model outputs (predictions)
+runs/
+runs*/ 
+predict/
+results/
+
+# If you want to ignore ALL models except included ones:
+# models/*.pt
+# models/*.onnx
+# !models/fire_model.pt
+# !models/textile_model.pt
+# !models/ppe_model.pt
+# !models/electrical_panel.pt
+
+# ------------------------------------------
+# Build artifacts
+# ------------------------------------------
+build/
+dist/
+*.spec
+
+# PyInstaller internal folder
+main/
+*_internal/
+
+# ------------------------------------------
+# Temp files
+# ------------------------------------------
+tmp/
+temp/
+*.tmp
+
+# ------------------------------------------
+# Excel results (auto-generated)
+# ------------------------------------------
+sessions/**/results.xlsx
+
+# ------------------------------------------
+# Installers
+# ------------------------------------------
+*.exe
+*.msi
+installer/

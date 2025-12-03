@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
-from detection_core import run_inference_on_path, ensure_dirs, create_session_folder, cfg
+from detection_core import run_inference_on_path, ensure_dirs, create_session_folder, cfg, models
 
 
 # ---------------- Worker Thread ---------------- #
@@ -30,15 +30,17 @@ class WorkerThread(QThread):
     one_done = pyqtSignal(str, list, list)
     done = pyqtSignal()
 
-    def __init__(self, files, session_results_dir):
+    def __init__(self, files, session_results_dir, enabled_models):
         super().__init__()
         self.files = files
         self.session_results_dir = session_results_dir
+        # enabled_models: dict name->YOLO model object (Ultralytics)
+        self.enabled_models = enabled_models
 
     def run(self):
         for f in self.files:
             try:
-                out, dets, comments = run_inference_on_path(f, self.session_results_dir)
+                out, dets, comments = run_inference_on_path(f, self.session_results_dir, self.enabled_models)
                 self.one_done.emit(out, dets, comments)
             except Exception as e:
                 self.one_done.emit("", [], [f"Error: {e}"])
@@ -70,6 +72,7 @@ class App(QWidget):
         self.preview.setStyleSheet("border: 1px solid #ccc; background: #fafafa;")
         self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.preview.setMinimumSize(50, 50)
 
         self.progress = QProgressBar()
         self.progress.setVisible(False)
@@ -97,6 +100,8 @@ class App(QWidget):
         model_layout = QVBoxLayout()
         model_layout.addWidget(QLabel("Models to Run:"))
 
+        # Build checkboxes from cfg (model names)
+        # cfg["models"] is expected to be a dict mapping model keys -> metadata
         for mname in cfg["models"].keys():
             cb = QCheckBox(mname)
             cb.setChecked(True)
@@ -109,9 +114,11 @@ class App(QWidget):
         model_scroll = QScrollArea()
         model_scroll.setWidgetResizable(True)
         model_scroll.setWidget(model_widget)
+        model_scroll.setMinimumHeight(150)
 
         self.logs = QListWidget()
         self.logs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.logs.setMinimumSize(100, 100)
 
         self.btn_open_excel = QPushButton("Open Results.xlsx")
         self.btn_browse_saved = QPushButton("Browse Saved Annotated Images")
@@ -178,12 +185,30 @@ class App(QWidget):
             except Exception as e:
                 print("Error copying:", e)
 
+        if not saved_files:
+            QMessageBox.warning(self, "Upload error", "No files were saved for processing.")
+            return
+
+        # Determine enabled models from checkboxes
+        enabled = {}
+        for name, cb in self.model_checks.items():
+            if cb.isChecked():
+                # only include models that were actually loaded into 'models'
+                if name in models:
+                    enabled[name] = models[name]
+                else:
+                    print(f"Model '{name}' checked in UI but not loaded on disk; skipping.")
+
+        # If no model selected, fallback to all loaded models
+        if not enabled:
+            enabled = models.copy()
+
         # Run detection
         self.progress.setVisible(True)
         self.progress.setMaximum(len(saved_files))
         self.progress.setValue(0)
 
-        self.thread = WorkerThread(saved_files, self.results_dir)
+        self.thread = WorkerThread(saved_files, self.results_dir, enabled)
         self.thread.one_done.connect(self.update_result)
         self.thread.done.connect(self.finish_session)
         self.thread.start()
@@ -197,14 +222,17 @@ class App(QWidget):
 
         if out and os.path.exists(out):
             pix = QPixmap(out)
-            self.preview.setPixmap(
-                pix.scaled(
-                    self.preview.width(),
-                    self.preview.height(),
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
+            if not pix.isNull():
+                self.preview.setPixmap(
+                    pix.scaled(
+                        self.preview.width(),
+                        self.preview.height(),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
                 )
-            )
+            else:
+                self.preview.setText("Preview not available")
 
         self.logs.clear()
         for c in comments:
@@ -237,14 +265,17 @@ class App(QWidget):
         out, dets, comments = self.current_results[self.current_index]
         if out and os.path.exists(out):
             pix = QPixmap(out)
-            self.preview.setPixmap(
-                pix.scaled(
-                    self.preview.width(),
-                    self.preview.height(),
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
+            if not pix.isNull():
+                self.preview.setPixmap(
+                    pix.scaled(
+                        self.preview.width(),
+                        self.preview.height(),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
                 )
-            )
+            else:
+                self.preview.setText("Preview not available")
 
         self.logs.clear()
         for c in comments:
@@ -275,14 +306,17 @@ class App(QWidget):
         )
         if file:
             pix = QPixmap(file)
-            self.preview.setPixmap(
-                pix.scaled(
-                    self.preview.width(),
-                    self.preview.height(),
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
+            if not pix.isNull():
+                self.preview.setPixmap(
+                    pix.scaled(
+                        self.preview.width(),
+                        self.preview.height(),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
                 )
-            )
+            else:
+                QMessageBox.warning(self, "Preview error", "Could not load the image.")
 
     # ------------------------------------------------------------
     # View full logs

@@ -11,7 +11,7 @@ from openpyxl import Workbook, load_workbook
 # Base directory (Desktop_App/)
 BASE_DIR = Path(__file__).parent
 
-# Load YOLO models ONCE globally
+# Load YOLO models ONCE globally (Ultralytics YOLO v11 assumed)
 cfg, models = load_models()
 
 
@@ -61,33 +61,70 @@ def save_to_excel(session_results_dir: Path, filename: str, detections: list, co
 
 # -------------------------------------------------------------
 # Main function: run YOLO models on image and produce results
+# Accepts optional enabled_models dict (name -> model_object)
+# If enabled_models is None, uses the global 'models'
 # -------------------------------------------------------------
-def run_inference_on_path(image_path: str, session_results_dir: Path):
+def run_inference_on_path(image_path: str, session_results_dir: Path, enabled_models: dict = None):
     image_path = str(image_path).replace("\\", "/")
     print("\nINPUT IMAGE:", image_path)
+
+    # Choose which models to run
+    run_models = enabled_models if (enabled_models is not None and len(enabled_models) > 0) else models
 
     all_detections = []
 
     # ------------ Run each available model ------------- #
-    for model_name, model_obj in models.items():
+    for model_name, model_obj in run_models.items():
         print(f"\nRunning model '{model_name}' on image...")
 
+        # Execute prediction (Ultralytics v11 -> Results objects)
         try:
-            dets = model_obj.predict(image_path)
+            results = model_obj.predict(image_path)  # returns Results object(s)
         except Exception as e:
             print(f"ERROR running model '{model_name}':", e)
-            dets = []
+            results = []
 
-        print(f"Model '{model_name}' detections:", len(dets))
+        parsed_dets = []
 
-        # Tag the model name into detection dict
-        for d in dets:
-            d["model"] = model_name
+        # Parse Ultralytics Results -> list of detection dicts
+        for r in results:
+            # r.boxes might be None or empty
+            boxes = getattr(r, "boxes", None)
+            names = getattr(r, "names", {})  # mapping id->name
+            if boxes is None:
+                continue
 
-        all_detections.extend(dets)
+            # Each box in r.boxes is a Box object with attributes xyxy, conf, cls
+            for b in boxes:
+                try:
+                    # xyxy, conf, cls are tensors, access [0] then convert
+                    xyxy_tensor = b.xyxy[0]  # tensor-like
+                    xyxy = [int(round(float(x))) for x in xyxy_tensor.tolist()]
+
+                    conf_val = float(b.conf[0]) if getattr(b, "conf", None) is not None else 0.0
+                    cls_id = int(b.cls[0]) if getattr(b, "cls", None) is not None else -1
+
+                    label = names.get(cls_id, str(cls_id)) if isinstance(names, dict) else str(cls_id)
+
+                    parsed_dets.append({
+                        "bbox": xyxy,           # [x1, y1, x2, y2] ints
+                        "confidence": conf_val, # float
+                        "label": label,         # string
+                        "model": model_name
+                    })
+                except Exception as e:
+                    print("Box parsing error (skipping one box):", e)
+                    continue
+
+        print(f"Model '{model_name}' detections:", len(parsed_dets))
+        all_detections.extend(parsed_dets)
 
     # ------------ Generate comments ------------ #
-    comments = generate_comments(all_detections)
+    try:
+        comments = generate_comments(all_detections)
+    except Exception as e:
+        print("COMMENT GENERATION ERROR:", e)
+        comments = ["Error generating comments"]
 
     # ------------ Save annotated image ------------ #
     out_name = f"annotated_{Path(image_path).name}"

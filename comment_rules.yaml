@@ -1,35 +1,97 @@
+# ------------------------------
+# PPE SAFETY CLASSES
+# ------------------------------
+Goggles:
+  type: safe
+  message: "User is wearing goggles. Eye protection OK."
+
+Prescription-Glasses:
+  type: anomaly
+  message: "User is using prescription glasses instead of protective safety goggles. Replace with certified safety goggles."
+
+Protective-Goggles:
+  type: safe
+  message: "Certified protective goggles detected. Eye protection OK."
+
+Safety-Glasses:
+  type: safe
+  message: "User is wearing safety glasses. Eye protection OK."
+
+no-helmet:
+  type: anomaly
+  message: "Helmet not detected — critical PPE violation. Wear a safety helmet immediately."
+
+with-helmet:
+  type: safe
+  message: "Helmet detected. Head protection OK."
+
+
+# ------------------------------
+# GENERAL SAFETY CLASSES
+# ------------------------------
 fire_extinguisher:
   accessible: "Fire extinguisher accessible."
   obstructed: "Object obstructing fire extinguisher — extinguisher may not be accessible."
 
 barrel: "Barrel detected — ensure proper labeling and secure placement."
-battery: "Battery detected — check for leaks, proper storage, and fire safety compliance. And remove the material near the battery"
-camera broken: "Broken camera detected — repair or replace immediately for safety monitoring."
-cardboard box: "Cardboard box detected — keep clear of pathways and flammable areas."
-door: "Door detected — ensure it is not blocked and remains accessible."
-electrical component: "Electrical component detected — verify safe installation and wiring."
-electrical light: "Electrical light detected — check functionality and safety compliance."
-electrical panel: "Electrical panel detected — ensure no obstruction and proper fencing"
-electrical panel open: "Open electrical panel detected — close immediately to prevent hazards - check for safety fencing"
-electrical pipe: "Electrical pipe detected — verify correct routing and safety compliance."
-entrance: "Entrance detected — confirm it is not obstructed for safe evacuation."
-fan: "Fan detected — check for proper functioning and maintenance."
-fire waterbucket: "Fire water bucket detected — ensure it is filled and accessible."
-garbage: "Garbage detected — dispose properly to maintain hygiene and fire safety."
-garment materials: "Garment materials detected — ensure organized storage to avoid hazards."
-gate: "Gate detected — confirm it is functional and free of obstruction."
-handwash: "Handwash station detected — ensure availability of soap and water."
-human: "Person detected — confirm proper use of PPE (helmet, gloves, safety gear)."
-macihenary: "Machinery detected — ensure safety guards and regular maintenance."
-meter: "Meter detected — verify accuracy and accessibility."
-obstacle: "Obstacle detected — remove to ensure clear pathways."
-oil drum: "Oil drum detected — check sealing, labeling, and leak prevention."
-pipe: "Pipe detected — ensure proper installation and no leakage."
-sack: "Sack detected — store safely to prevent obstruction or fire risk."
-steel rack: "Steel rack detected — confirm load is stable and rack is not overloaded."
-steel valve: "Steel valve detected — ensure it is functional and leak-free."
-truck: "Truck detected — confirm safe parking and tires between truck and loading area for safety."
-weight readings: "Weight readings detected — verify accuracy of scale and calibration."
-weight scale: "Weighing scale detected — ensure calibration and clear access."
 
+battery: "Battery detected — check for leaks, proper storage, and fire safety compliance. Remove any surrounding materials."
+
+camera broken: "Broken camera detected — repair or replace immediately for safety monitoring."
+
+cardboard box: "Cardboard box detected — keep clear of pathways and flammable areas."
+
+door: "Door detected — ensure it is not blocked and remains accessible."
+
+electrical component: "Electrical component detected — verify safe installation and wiring."
+
+electrical light: "Electrical light detected — check functionality and electrical safety."
+
+electrical panel: "Electrical panel detected — ensure no obstruction and proper fencing."
+
+electrical panel open: "Open electrical panel detected — close immediately & ensure panel fencing."
+
+electrical pipe: "Electrical pipe detected — verify correct routing and safety compliance."
+
+entrance: "Entrance detected — ensure it is not obstructed."
+
+fan: "Fan detected — check for proper functioning and maintenance."
+
+fire waterbucket: "Fire water bucket detected — ensure it is filled and accessible."
+
+garbage: "Garbage detected — dispose properly to maintain hygiene & fire safety."
+
+garment materials: "Garment materials detected — store neatly to avoid fire or obstruction hazards."
+
+gate: "Gate detected — confirm it is functional and not blocked."
+
+handwash: "Handwash station detected — ensure water and soap availability."
+
+human: "Person detected — verify PPE compliance (helmet, goggles, safety gear)."
+
+machinery: "Machinery detected — ensure guards are in place and maintenance is up to date."
+
+meter: "Meter detected — verify accessibility and calibration."
+
+obstacle: "Obstacle detected — remove immediately to maintain clear pathways."
+
+oil drum: "Oil drum detected — check sealing, labeling, and leak prevention."
+
+pipe: "Pipe detected — ensure proper installation and inspect for leaks."
+
+sack: "Sack detected — store safely to avoid obstruction."
+
+steel rack: "Steel rack detected — ensure load is stable & rack is not overloaded."
+
+steel valve: "Steel valve detected — verify functionality & absence of leaks."
+
+truck: "Truck detected — ensure safe parking and proper docking safety."
+
+weight readings: "Weight reading detected — verify accuracy."
+
+weight scale: "Weighing scale detected — ensure calibration & clear access."
+
+# ------------------------------
+# DEFAULT CLASS
+# ------------------------------
 default: "Object detected — review for safety compliance."
